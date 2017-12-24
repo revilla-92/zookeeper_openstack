@@ -17,6 +17,9 @@ parameters:
       - allowed_pattern: "[A-Z]+[a-zA-Z0-9]*"
         description: Password must start with an uppercase character.
 
+  config_file:
+    type: string
+    description: The contents of the file /tmp/zoookeeper_openstack/server_config for server configurations.
 
 resources:
 
@@ -129,10 +132,19 @@ resources:
   ############################################## Create Servers. #############################################
   ############################################################################################################
 
-  ################################################################################################################################################
+  ########################################################################################################################################
   # Tema CLOUD-INIT -- MIRAR: https://docs.openstack.org/heat/pike/template_guide/openstack.html#OS::Nova::Server-prop-user_data
   #                           https://docs.openstack.org/heat/latest/template_guide/software_deployment.html#software-config-resources
-  ################################################################################################################################################
+  ########################################################################################################################################
+
+
+  boot_config:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        write_files:
+        - path: /tmp/CNVR/zoookeeper_openstack
+          content: {get_param: config_file}
 
   vm1:
    type: OS::Nova::Server
@@ -141,9 +153,11 @@ resources:
     key_name: { get_resource: keypair1 }
     image: xenial-server-cloudimg-amd64-vnx
     flavor: m1.tiny
+    user_data_format: SOFTWARE_CONFIG
+    user_data: {get_resource: boot_config}
     networks:
      - network: { get_resource: net1 }
-
+    
   vm2:
    type: OS::Nova::Server
    properties:
@@ -151,6 +165,8 @@ resources:
     key_name: { get_resource: keypair2 }
     image: xenial-server-cloudimg-amd64-vnx
     flavor: m1.tiny
+    user_data_format: SOFTWARE_CONFIG
+    user_data: {get_resource: boot_config}
     networks:
      - network: { get_resource: net1 }
 
@@ -161,6 +177,8 @@ resources:
     key_name: { get_resource: keypair3 }
     image: xenial-server-cloudimg-amd64-vnx
     flavor: m1.tiny
+    user_data_format: SOFTWARE_CONFIG
+    user_data: {get_resource: boot_config}
     networks:
      - network: { get_resource: net1 }
 

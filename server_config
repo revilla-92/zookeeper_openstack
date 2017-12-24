@@ -1,0 +1,8 @@
+#cloud-config
+hostname: zkserver
+fqdn: zkserver.danalbang.com 
+manage_etc_hosts: true 
+packages:
+	- aptsh
+	- default-jre-headless -   libzookeeper-java
+	- zookeeper

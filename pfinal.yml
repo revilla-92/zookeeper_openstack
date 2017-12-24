@@ -1,0 +1,209 @@
+heat_template_version: 2017-02-24
+
+description: Escenario de la practica final
+
+parameters:
+
+  database_password:
+    type: string
+    label: Database Password
+    description: Password to be used for database
+    hidden: true
+    constraints:
+      - length: { min: 6, max: 8 }
+        description: Password length must be between 6 and 8 characters.
+      - allowed_pattern: "[a-zA-Z0-9]+"
+        description: Password must consist of characters and numbers only.
+      - allowed_pattern: "[A-Z]+[a-zA-Z0-9]*"
+        description: Password must start with an uppercase character.
+
+
+resources:
+
+  ############################################################################################################
+  ############################################# Create Key-Pairs. ############################################
+  ############################################################################################################
+
+  keypair1:
+    type: OS::Nova::KeyPair
+    properties:
+      save_private_key: true
+      name: keypair1
+
+  keypair2:
+    type: OS::Nova::KeyPair
+    properties:
+      save_private_key: true
+      name: keypair2
+
+  keypair3:
+    type: OS::Nova::KeyPair
+    properties:
+      save_private_key: true
+      name: keypair3
+
+
+  ############################################################################################################
+  ############################################## Create Networks. ############################################
+  ############################################################################################################
+  net1:
+        type: OS::Neutron::Net
+        properties:
+          name: net1
+
+  net2:
+        type: OS::Neutron::Net
+        properties:
+          name: net2
+
+  subnet1:
+        type: OS::Neutron::Subnet
+        properties:
+          name: subnet1
+          network_id: { get_resource: net1 }
+          gateway_ip: 10.1.1.1
+          dns_nameservers: [8.8.8.8]
+          cidr: 10.1.1.0/24
+          allocation_pools:
+            - start: 10.1.1.8
+              end: 10.1.1.100
+
+  subnet2:
+        type: OS::Neutron::Subnet
+        properties:
+          name: subnet2
+          network_id: { get_resource: net2 }
+          gateway_ip: 10.1.2.1
+          dns_nameservers: [8.8.8.8]
+          cidr: 10.1.2.0/24
+          allocation_pools:
+            - start: 10.1.2.8
+              end: 10.1.2.100
+
+
+  # openstack network create --share --external --provider-physical-network provider --provider-network-type flat ExtNet
+  ExtNet:
+    type: OS::Neutron::Net
+    properties:
+      name: ExtNet
+      shared: True
+
+  ExtSubNet:
+        type: OS::Neutron::Subnet
+        properties:
+          name: ExtSubNet
+          network_id: { get_resource: ExtNet }
+          gateway_ip: 10.0.10.1
+          dns_nameservers: [10.0.10.1]
+          cidr: 10.0.10.0/24
+          allocation_pools:
+            - start: 10.0.10.100
+              end: 10.0.10.200        
+
+
+  ############################################################################################################
+  ############################################### Create Router. #############################################
+  ############################################################################################################
+
+  router:
+    type: OS::Neutron::Router
+    properties:
+      name: r
+      external_gateway_info:
+        network: ExtNet
+
+  router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: router }
+      subnet_id: { get_resource: subnet1 }
+
+  router_interface:
+    type: OS::Neutron::RouterInterface
+    properties:
+      router_id: { get_resource: router }
+      subnet_id: { get_resource: subnet2 }
+
+
+  ############################################################################################################
+  ############################################## Create Servers. #############################################
+  ############################################################################################################
+
+  ################################################################################################################################################
+  # Tema CLOUD-INIT -- MIRAR: https://docs.openstack.org/heat/pike/template_guide/openstack.html#OS::Nova::Server-prop-user_data
+  #                           https://docs.openstack.org/heat/latest/template_guide/software_deployment.html#software-config-resources
+  ################################################################################################################################################
+
+  vm1:
+   type: OS::Nova::Server
+   properties:
+    name: vm1
+    key_name: { get_resource: keypair1 }
+    image: xenial-server-cloudimg-amd64-vnx
+    flavor: m1.tiny
+    networks:
+     - network: { get_resource: net1 }
+
+  vm2:
+   type: OS::Nova::Server
+   properties:
+    name: vm2
+    key_name: { get_resource: keypair2 }
+    image: xenial-server-cloudimg-amd64-vnx
+    flavor: m1.tiny
+    networks:
+     - network: { get_resource: net1 }
+
+  vm3:
+   type: OS::Nova::Server
+   properties:
+    name: vm3
+    key_name: { get_resource: keypair3 }
+    image: xenial-server-cloudimg-amd64-vnx
+    flavor: m1.tiny
+    networks:
+     - network: { get_resource: net1 }
+
+
+  ############################################################################################################
+  ########################################### Create Admin Server. ###########################################
+  ############################################################################################################
+
+  server_floating_ip:
+    type: OS::Neutron::FloatingIP
+    depends_on: server_port
+    properties:
+      floating_network_id: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      port_id: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+
+
+  ############################################################################################################
+  ########################################### Create Load Balancer. ##########################################
+  ############################################################################################################
+
+  # https://github.com/openstack/heat-templates/blob/master/hot/lbaasv2/lb_group.yaml
+
+
+  ############################################################################################################
+  ########################################### Create MySQL Server. ###########################################
+  ############################################################################################################ 
+
+  # https://github.com/openstack/heat-templates/blob/master/hot/Windows/MSSQLServer/MSSQL.yaml
+
+
+############################################################################################################
+################################################## Outputs. ################################################
+############################################################################################################
+
+outputs:
+  vm1_outputs:
+    description: The IP address and instance name of the VM1 instance
+    value: { get_attr: [vm1, first_address, name] }
+  vm2_outputs:
+    description: The IP address and instance name of the VM1 instance
+    value: { get_attr: [vm2, first_address, name] }
+  vm3_outputs:
+    description: The IP address and instance name of the VM1 instance
+    value: { get_attr: [vm3, first_address, name] }       
+
+

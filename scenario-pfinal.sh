@@ -73,7 +73,7 @@ sudo vnx -f openstack_lab.xml -x load-img
 # HOT (Heat) Templates for creating scenario
 # ======================================================================================================================================
 
-# Si existe el repo, hacer pull; si no, clonar.
+# If repository exits pull, else clone.
 if [ -d "$WORKING_DIRECTORY/zookeeper_openstack" ]; then
 	cd $WORKING_DIRECTORY/zookeeper_openstack && git pull
 else
@@ -90,6 +90,11 @@ fi
 #######################################################################################################################################
 
 
+
+
+# ======================================================================================================================================
+# Outputs of script execution
+# ======================================================================================================================================
 
 # Configure NAT
 sudo vnx_config_nat ExtNet enp1s0

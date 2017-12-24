@@ -45,6 +45,12 @@ resources:
       save_private_key: true
       name: keypair3
 
+  keypair4:
+    type: OS::Nova::KeyPair
+    properties:
+      save_private_key: true
+      name: keypair4
+
 
   ############################################################################################################
   ############################################## Create Networks. ############################################
@@ -146,6 +152,27 @@ resources:
         - path: /tmp/CNVR/zoookeeper_openstack
           content: {get_param: config_file}
 
+
+  ############################################################################################################
+  ################################################## Modificar ###############################################
+  ############################################################################################################
+  vms_security_group:
+    type: OS::Neutron::SecurityGroup
+    properties:
+      description: Add security group rules for server
+      name: security-group
+      rules:
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: tcp
+          port_range_min: 22
+          port_range_max: 22
+        - remote_ip_prefix: 0.0.0.0/0
+          protocol: icmp
+  ############################################################################################################
+  ############################################################################################################
+  ############################################################################################################
+
+
   vm1:
    type: OS::Nova::Server
    properties:
@@ -187,12 +214,30 @@ resources:
   ########################################### Create Admin Server. ###########################################
   ############################################################################################################
 
+  vm_admin_port:
+    type: OS::Neutron::Port
+    properties:
+      network_id: { get_resource: net1 }
+      fixed_ips:
+        - subnet_id: { get_resource: subnet1 }
+      security_groups: [{ get_resource: vms_security_group }]
+
   server_floating_ip:
     type: OS::Neutron::FloatingIP
     depends_on: server_port
     properties:
-      floating_network_id: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-      port_id: XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+      floating_network_id: { get_resource: net1 }
+      port_id: { get_resource: vm_admin_port }
+
+  vm_admin:
+   type: OS::Nova::Server
+   properties:
+    name: vm_admin
+    key_name: { get_resource: keypair4 }
+    image: xenial-server-cloudimg-amd64-vnx
+    flavor: m1.tiny
+    networks:
+     - port: { get_resource: vm_admin_port }
 
 
   ############################################################################################################

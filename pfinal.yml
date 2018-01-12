@@ -2,59 +2,76 @@ heat_template_version: 2017-02-24
 
 description: Escenario de la practica final
 
-parameters:
+###################################################################################
+############################ Seccion de Parametros ################################
+###################################################################################
 
-  database_password:
-    type: string
-    label: Database Password
-    description: Password to be used for database
-    hidden: true
-    constraints:
-      - length: { min: 6, max: 8 }
-        description: Password length must be between 6 and 8 characters.
-      - allowed_pattern: "[a-zA-Z0-9]+"
-        description: Password must consist of characters and numbers only.
-      - allowed_pattern: "[A-Z]+[a-zA-Z0-9]*"
-        description: Password must start with an uppercase character.
 
-  config_file:
-    type: string
-    description: The contents of the file /tmp/zoookeeper_openstack/server_config for server configurations.
+
+
+###################################################################################
+###################################################################################
+###################################################################################
+
+
+
+###################################################################################
+############################# Seccion de Recursos #################################
+###################################################################################
 
 resources:
 
-  ############################################################################################################
-  ############################################# Create Key-Pairs. ############################################
-  ############################################################################################################
-
+  ###############################################################################################
+  ######### Generación de key pairs para los servidores y la maquina de administracion. #########
+  ###############################################################################################
+ 
   keypair1:
     type: OS::Nova::KeyPair
     properties:
       save_private_key: true
-      name: keypair1
+      name: key1
 
   keypair2:
     type: OS::Nova::KeyPair
     properties:
       save_private_key: true
-      name: keypair2
+      name: key2
 
   keypair3:
     type: OS::Nova::KeyPair
     properties:
       save_private_key: true
-      name: keypair3
+      name: key3
 
   keypair4:
     type: OS::Nova::KeyPair
     properties:
       save_private_key: true
-      name: keypair4
+      name: key4
+
+  keypair5:
+    type: OS::Nova::KeyPair
+    properties:
+      save_private_key: true
+      name: key5
+
+  keypair6:
+    type: OS::Nova::KeyPair
+    properties:
+      save_private_key: true
+      name: key6
+
+  keypair7:
+    type: OS::Nova::KeyPair
+    properties:
+      save_private_key: true
+      name: key7
 
 
-  ############################################################################################################
-  ############################################## Create Networks. ############################################
-  ############################################################################################################
+  ###############################################################################################
+  ############### Generación de los elementos de red: redes y subredes asociadas. ###############
+  ###############################################################################################
+
   net1:
         type: OS::Neutron::Net
         properties:
@@ -90,183 +107,287 @@ resources:
               end: 10.1.2.100
 
 
-  # openstack network create --share --external --provider-physical-network provider --provider-network-type flat ExtNet
-  ExtNet:
-    type: OS::Neutron::Net
-    properties:
-      name: ExtNet
-      shared: True
-
-  ExtSubNet:
-        type: OS::Neutron::Subnet
-        properties:
-          name: ExtSubNet
-          network_id: { get_resource: ExtNet }
-          gateway_ip: 10.0.10.1
-          dns_nameservers: [10.0.10.1]
-          cidr: 10.0.10.0/24
-          allocation_pools:
-            - start: 10.0.10.100
-              end: 10.0.10.200        
-
-
-  ############################################################################################################
-  ############################################### Create Router. #############################################
-  ############################################################################################################
+  ###############################################################################################
+  ################# Configuracion del router y conexion con las dos redes creadas. ##############
+  ###############################################################################################
 
   router:
     type: OS::Neutron::Router
     properties:
-      name: r
+      name: r1
       external_gateway_info:
-        network: ExtNet
+        network: ExtNet 
 
-  router_interface:
+  router_interface_1:
     type: OS::Neutron::RouterInterface
     properties:
       router_id: { get_resource: router }
       subnet_id: { get_resource: subnet1 }
 
-  router_interface:
+  router_interface_2:
     type: OS::Neutron::RouterInterface
     properties:
       router_id: { get_resource: router }
       subnet_id: { get_resource: subnet2 }
 
 
-  ############################################################################################################
-  ############################################## Create Servers. #############################################
-  ############################################################################################################
+  ###############################################################################################
+  ################# Generación del entorno Zookeeper con su configuracion inicial. ##############
+  ###############################################################################################
 
-  ########################################################################################################################################
-  # Tema CLOUD-INIT -- MIRAR: https://docs.openstack.org/heat/pike/template_guide/openstack.html#OS::Nova::Server-prop-user_data
-  #                           https://docs.openstack.org/heat/latest/template_guide/software_deployment.html#software-config-resources
-  ########################################################################################################################################
-
-
-  boot_config:
+  # Configuracion mediante CLOUD-INIT del entorno Zookeeper.
+  zookeeper_ensemble_config:
     type: OS::Heat::CloudConfig
     properties:
       cloud_config:
-        write_files:
-        - path: /tmp/CNVR/zoookeeper_openstack
-          content: {get_param: config_file}
+        packages:
+          - aptsh
+          - default-jre-headless
+          - libzookeeper-java
+          - zookeeper
+        runcmd:
+          - git clone https://github.com/revilla-92/zookeeper_ensemble
+          - cd zookeeper_ensemble
+          - chmod 777 deploy_zk.sh
+          - ./deploy_zk.sh
 
-
-  ############################################################################################################
-  ################################################## Modificar ###############################################
-  ############################################################################################################
-  vms_security_group:
-    type: OS::Neutron::SecurityGroup
-    properties:
-      description: Add security group rules for server
-      name: security-group
-      rules:
-        - remote_ip_prefix: 0.0.0.0/0
-          protocol: tcp
-          port_range_min: 22
-          port_range_max: 22
-        - remote_ip_prefix: 0.0.0.0/0
-          protocol: icmp
-  ############################################################################################################
-  ############################################################################################################
-  ############################################################################################################
-
-
-  vm1:
+  # Configuracion de las maquinas virtuales del entorno zookeeper.
+  zk1:
    type: OS::Nova::Server
    properties:
-    name: vm1
+    name: zk1
     key_name: { get_resource: keypair1 }
     image: xenial-server-cloudimg-amd64-vnx
-    flavor: m1.tiny
+    flavor: m1.smaller
     user_data_format: SOFTWARE_CONFIG
-    user_data: {get_resource: boot_config}
+    user_data: {get_resource: zookeeper_ensemble_config}
     networks:
-     - network: { get_resource: net1 }
-    
-  vm2:
+      - network: { get_resource: net2 }
+
+  zk2:
    type: OS::Nova::Server
    properties:
-    name: vm2
+    name: zk2
     key_name: { get_resource: keypair2 }
     image: xenial-server-cloudimg-amd64-vnx
-    flavor: m1.tiny
+    flavor: m1.smaller
     user_data_format: SOFTWARE_CONFIG
-    user_data: {get_resource: boot_config}
+    user_data: {get_resource: zookeeper_ensemble_config}
     networks:
-     - network: { get_resource: net1 }
+      - network: { get_resource: net2 }
 
-  vm3:
+  zk3:
    type: OS::Nova::Server
    properties:
-    name: vm3
+    name: zk3
     key_name: { get_resource: keypair3 }
     image: xenial-server-cloudimg-amd64-vnx
-    flavor: m1.tiny
+    flavor: m1.smaller
     user_data_format: SOFTWARE_CONFIG
-    user_data: {get_resource: boot_config}
+    user_data: {get_resource: zookeeper_ensemble_config}
+    networks:
+      - network: { get_resource: net2 }
+
+
+  ###############################################################################################
+  ################## Generación de los servidores con su configuracion inicial. #################
+  ###############################################################################################
+
+  # Configuracion mediante CLOUD-INIT de los servidores.
+  server_config:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        packages:
+          - aptsh
+          - default-jre-headless
+          - libzookeeper-java
+          - zookeeper
+        runcmd:
+          - git clone https://github.com/revilla-92/zookeeper_servers
+          - cd zookeeper_servers
+
+  # Configuracion de los servidores donde se arrancara la aplicacion del banco.
+  server1:
+   type: OS::Nova::Server
+   properties:
+    name: server1
+    key_name: { get_resource: keypair4 }
+    image: xenial-server-cloudimg-amd64-vnx
+    flavor: m1.smaller
+    user_data_format: SOFTWARE_CONFIG
+    user_data: {get_resource: server_config}
+    networks:
+     - network: { get_resource: net1 }
+
+  server2:
+   type: OS::Nova::Server
+   properties:
+    name: server2
+    key_name: { get_resource: keypair5 }
+    image: xenial-server-cloudimg-amd64-vnx
+    flavor: m1.smaller
+    user_data_format: SOFTWARE_CONFIG
+    user_data: {get_resource: server_config}
+    networks:
+     - network: { get_resource: net1 }
+
+  server3:
+   type: OS::Nova::Server
+   properties:
+    name: server3
+    key_name: { get_resource: keypair6 }
+    image: xenial-server-cloudimg-amd64-vnx
+    flavor: m1.smaller
+    user_data_format: SOFTWARE_CONFIG
+    user_data: {get_resource: server_config}
     networks:
      - network: { get_resource: net1 }
 
 
-  ############################################################################################################
-  ########################################### Create Admin Server. ###########################################
-  ############################################################################################################
+  ###############################################################################################
+  ################ Generación de la maquina de administracion y su ip flotante. #################
+  ###############################################################################################
 
-  vm_admin_port:
+  admin_floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: ExtNet
+      port_id: { get_resource: admin_vm_port }
+
+  admin_vm:
+   type: OS::Nova::Server
+   properties:
+    name: admin_vm
+    key_name: { get_resource: keypair7 }
+    image: xenial-server-cloudimg-amd64-vnx
+    flavor: m1.smaller
+    networks: 
+      - port: { get_resource: admin_vm_port }
+
+  admin_vm_port:
     type: OS::Neutron::Port
     properties:
       network_id: { get_resource: net1 }
       fixed_ips:
         - subnet_id: { get_resource: subnet1 }
-      security_groups: [{ get_resource: vms_security_group }]
 
-  server_floating_ip:
-    type: OS::Neutron::FloatingIP
-    depends_on: server_port
+
+  ###############################################################################################
+  ################### Generación del balanceador de carga y sus pool_members. ###################
+  ###############################################################################################
+
+  loadbalancer:
+    type: OS::Neutron::LBaaS::LoadBalancer
     properties:
-      floating_network_id: { get_resource: net1 }
-      port_id: { get_resource: vm_admin_port }
+      vip_subnet: { get_resource: subnet1 }
 
-  vm_admin:
-   type: OS::Nova::Server
-   properties:
-    name: vm_admin
-    key_name: { get_resource: keypair4 }
-    image: xenial-server-cloudimg-amd64-vnx
-    flavor: m1.tiny
-    networks:
-     - port: { get_resource: vm_admin_port }
+  pool:
+    type: OS::Neutron::LBaaS::Pool
+    properties:
+      lb_algorithm: ROUND_ROBIN
+      protocol: HTTP
+      listener: { get_resource: listener }
+
+  listener:
+    type: OS::Neutron::LBaaS::Listener
+    properties:
+      loadbalancer: { get_resource: loadbalancer }
+      protocol: HTTP
+      protocol_port: 80
+
+  floating_ip:
+    type: OS::Neutron::FloatingIP
+    properties:
+      floating_network: ExtNet
+      port_id: { get_attr: [loadbalancer, vip_port_id ]}
+
+  pool_member1:
+    type: OS::Neutron::LBaaS::PoolMember
+    properties:
+      pool: { get_resource: pool }
+      address: { get_attr: [ server1, first_address ]}
+      protocol_port: 8080
+      subnet: { get_resource: subnet1 }
+
+  pool_member2:
+    type: OS::Neutron::LBaaS::PoolMember
+    properties:
+      pool: { get_resource: pool }
+      address: { get_attr: [ server2, first_address ]}
+      protocol_port: 8080
+      subnet: { get_resource: subnet1 }
+
+  pool_member3:
+    type: OS::Neutron::LBaaS::PoolMember
+    properties:
+      pool: { get_resource: pool }
+      address: { get_attr: [ server3, first_address ]}
+      protocol_port: 8080
+      subnet: { get_resource: subnet1 }
 
 
-  ############################################################################################################
-  ########################################### Create Load Balancer. ##########################################
-  ############################################################################################################
+  ###############################################################################################
+  ####################### Generación del Firewall, sus reglas y politica. #######################
+  ###############################################################################################
 
-  # https://github.com/openstack/heat-templates/blob/master/hot/lbaasv2/lb_group.yaml
+  ssh_rule:
+    type: OS::Neutron::FirewallRule
+    properties:
+      name: Allow_SSH
+      description: Allow SSH access on TCP port 22 to head nodes
+      action: allow
+      protocol: tcp
+      destination_port: 22
+      destination_ip_address: { get_attr: [admin_vm, first_address ]}
+
+  www_rule:
+    type: OS::Neutron::FirewallRule
+    properties:
+      name: Allow_WWW
+      description: Allow WWW access on TCP port 80 to LoadBalancer node
+      action: allow
+      protocol: tcp
+      destination_port: 80
+      destination_ip_address: { get_attr: [loadbalancer, first_address ]}
+
+  Intern_rule:
+    type: OS::Neutron::FirewallRule
+    properties:
+      name: Allow_From_Inside
+      description: Allow all traffic from inside network.
+      action: allow
+      source_ip_address: 10.1.1.0/24
+
+  FirewallPolicy:
+    type: OS::Neutron::FirewallPolicy
+    properties:
+      firewall_rules: [ssh_rule, www_rule, Intern_rule]
+      description: Policy that includes specified rules for this scenario
+      name: FWAAS_Policy
+
+  FWAAS:
+    type: OS::Neutron::Firewall
+    properties:
+      name: FWAAS
+      description: FWAAS that implements specified policy for the scenario
+      firewall_policy_id: { get_resource: FirewallPolicy }
 
 
-  ############################################################################################################
-  ########################################### Create MySQL Server. ###########################################
-  ############################################################################################################ 
-
-  # https://github.com/openstack/heat-templates/blob/master/hot/Windows/MSSQLServer/MSSQL.yaml
+###################################################################################
+###################################################################################
+###################################################################################
 
 
-############################################################################################################
-################################################## Outputs. ################################################
-############################################################################################################
 
-outputs:
-  vm1_outputs:
-    description: The IP address and instance name of the VM1 instance
-    value: { get_attr: [vm1, first_address, name] }
-  vm2_outputs:
-    description: The IP address and instance name of the VM1 instance
-    value: { get_attr: [vm2, first_address, name] }
-  vm3_outputs:
-    description: The IP address and instance name of the VM1 instance
-    value: { get_attr: [vm3, first_address, name] }       
+###################################################################################
+############################# Seccion de Salidas ##################################
+###################################################################################
 
 
+
+
+
+###################################################################################
+###################################################################################
+###################################################################################

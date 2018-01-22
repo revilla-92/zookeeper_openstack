@@ -26,7 +26,7 @@ echo -e "Cuantas maquinas desea que tenga el entorno zookeeper (introduzca un nu
 read -sr N_ZK_SERVERS
 
 # If input is not a number we assign default N_SERVERS to 3.
-if ! [[ $N_SERVERS =~ $re ]] ; then
+if ! [[ $N_ZK_SERVERS =~ $re ]] ; then
    N_ZK_SERVERS=3
 fi
 
@@ -99,7 +99,7 @@ SUBNET1_ID=$(grep -Eo "[a-z0-9]{8,8}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[
 NET1_ID=$(grep -Eo "[a-z0-9]{8,8}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{12,12}" net1.json | tail -n1)
 
 # Recover Net and Subnet ID of Network1 from created stack.
-openstack stack output show --all -f json network1_stack > net2.json
+openstack stack output show --all -f json network2_stack > net2.json
 SUBNET2_ID=$(grep -Eo "[a-z0-9]{8,8}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{12,12}" net2.json | head -1)
 NET2_ID=$(grep -Eo "[a-z0-9]{8,8}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{12,12}" net2.json | tail -n1)
 
@@ -127,6 +127,10 @@ openstack stack create --parameter "subnet=${SUBNET1_ID}" -t ./templates/load-ba
 # FireWall
 openstack stack create --parameter "subnet1=${SUBNET1_CIDR}" --parameter "subnet2=${SUBNET2_CIDR}" --parameter "router=${ROUTER_ID}" -t ./templates/firewall.yml firewall_stack
 
+# Hacer un WHILE HASTA QUE LA SALIDA DEL JSON DEL LBAAS NO SEA NULA
+
+sleep 90
+
 # Recover Pool ID for adding new Pool Members.
 openstack stack output show --all -f json lbaas_stack > lbaas.json
 POOL_ID=$(grep -Eo "[a-z0-9]{8,8}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{12,12}" lbaas.json | head -1)
@@ -144,7 +148,7 @@ openstack stack create --parameter "server_name=Admin_Server" --parameter "key_n
 # Create Zookeeper ensemble
 for (( COUNTER = 0; COUNTER < ${N_ZK_SERVERS}; COUNTER++ )); 
 do
-	openstack stack create --parameter "server_name=server$((COUNTER+1))" --parameter "key_name=key$((COUNTER+N_SERVERS))" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET1_ID}" --parameter "subnet=${SUBNET1_ID}" --parameter "pool_id=${POOL_ID}" -t ./templates/server.yml server$((COUNTER+1))_stack
+	openstack stack create --parameter "server_name=server$((COUNTER+1))" --parameter "key_name=key$((COUNTER+N_SERVERS))" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET2_ID}" --parameter "subnet=${SUBNET2_ID}" -t ./templates/zk-server.yml zk$((COUNTER+1))_stack
 done
 
 # Create Database server

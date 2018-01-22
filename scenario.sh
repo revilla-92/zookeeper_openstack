@@ -125,7 +125,7 @@ while true; do
         break
 	fi
 	rm -rf lbaas.json
-    sleep 1
+    	sleep 1
 done
 
 # Create Servers

@@ -34,6 +34,11 @@ parameters:
     label: Subnet ID
     description: ID of the Sub-Network in which the admin server will be connected to.
 
+  pool_id:
+    type: string
+    label: Pool ID
+    description: Pool ID of the Pool from members will be created into the Load Balancer.
+
 
 ###################################################################################
 ###################################################################################
@@ -76,6 +81,14 @@ resources:
       security_groups: [ { get_param: securityGroup } ]
       networks:
         - network: { get_param: net }
+
+  pool_member:
+    type: OS::Neutron::LBaaS::PoolMember
+    properties:
+      pool: { get_param: pool_id }
+      address: { get_attr: [server, first_address] }
+      protocol_port: 8080
+      subnet: { get_param: subnet }
 
 
 ###################################################################################

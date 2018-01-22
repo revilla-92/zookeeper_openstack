@@ -75,9 +75,9 @@ sudo vnx_config_nat ExtNet enp1s0
 source demo-openrc.sh
 
 
-#####################
-# SCENARIO CREATION #
-#####################
+#################################################################################################
+####################################### SCENARIO CREATION #######################################
+#################################################################################################
 
 # Parametros de entrada a la hora de crear las redes.
 SUBNET1_CIDR=10.1.1.0/24
@@ -93,36 +93,29 @@ openstack stack create --parameter "security_name=Security_Group" -t ./templates
 # Router 
 openstack stack create --parameter "router_name=r1" -t ./templates/router.yml router_stack
 
+# Recover Net and Subnet ID of Network1 from created stack.
+openstack stack output show --all -f json network1_stack > net1.json
+SUBNET1_ID=$(grep -Eo "[a-z0-9]{8,8}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{12,12}" net1.json | head -1)
+NET1_ID=$(grep -Eo "[a-z0-9]{8,8}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{12,12}" net1.json | tail -n1)
 
-################################################################################
-################################################################################
+# Recover Net and Subnet ID of Network1 from created stack.
+openstack stack output show --all -f json network1_stack > net2.json
+SUBNET2_ID=$(grep -Eo "[a-z0-9]{8,8}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{12,12}" net2.json | head -1)
+NET2_ID=$(grep -Eo "[a-z0-9]{8,8}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{12,12}" net2.json | tail -n1)
 
-# WAIT UNTIL ROUTER AND NETWORKS STACKS ARE COMPLETED.
-COMMAND BLA BLA 
+# Recover Router ID from created stack.
+openstack stack output show --all -f json router_stack > router.json
+ROUTER_ID=$(grep -Eo "[a-z0-9]{8,8}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{12,12}" router.json | head -1)
 
-################################################################################
-################################################################################
+# Recover Security Group ID.
+openstack stack output show --all -f json security_group_stack > security.json
+SECURITY_GROUP_ID=$(grep -Eo "[a-z0-9]{8,8}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{12,12}" security.json | head -1)
 
-
-################################################################################
-################################################################################
-
-# Salida del comando: openstack stack output show --all network1_stack
-NET1_ID=6688bd51-abfd-45a1-9d1b-d24792f2764f
-SUBNET1_ID=a9b2b93d-abd2-4c88-8726-2bedc3d1d8f6
-
-# Salida del comando: openstack stack output show --all network2_stack
-NET2_ID=ac907fa5-e00a-45a9-9b1c-c50be169ac43
-SUBNET2_ID=eac44787-5029-4e82-98bc-8423cfd6e5ac
-
-# Salida del comando: openstack stack output show --all router_stack
-ROUTER_ID=6fbeb4db-467d-44e2-bf6b-3d6b3590920b
-
-# Salida del comando: openstack stack output show --all security_group_stack
-SECURITY_GROUP_ID=08d7271f-7d94-4ce8-9204-0ab69f827cf6
-
-################################################################################
-################################################################################
+# Delete JSON Files
+rm -rf net1.json
+rm -rf net2.json
+rm -rf router.json
+rm -rf security.json
 
 # Router Associations
 openstack stack create --parameter "router_id=${ROUTER_ID}" --parameter "subnet_id=${SUBNET1_ID}" -t ./templates/router-interface.yml router_interface1_stack
@@ -134,47 +127,28 @@ openstack stack create --parameter "subnet=${SUBNET1_ID}" -t ./templates/load-ba
 # FireWall
 openstack stack create --parameter "subnet1=${SUBNET1_CIDR}" --parameter "subnet2=${SUBNET2_CIDR}" --parameter "router=${ROUTER_ID}" -t ./templates/firewall.yml firewall_stack
 
+# Recover Pool ID for adding new Pool Members.
+openstack stack output show --all -f json lbaas_stack > lbaas.json
+POOL_ID=$(grep -Eo "[a-z0-9]{8,8}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{12,12}" lbaas.json | head -1)
+rm -rf lbaas.json
+
 # Create Servers
-openstack stack create --parameter "server_name=server1" --parameter "key_name=key2" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET1_ID}" --parameter "subnet=${SUBNET1_ID}" -t ./templates/server.yml server1_stack
-openstack stack create --parameter "server_name=server2" --parameter "key_name=key3" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET1_ID}" --parameter "subnet=${SUBNET1_ID}" -t ./templates/server.yml server2_stack
-openstack stack create --parameter "server_name=server3" --parameter "key_name=key4" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET1_ID}" --parameter "subnet=${SUBNET1_ID}" -t ./templates/server.yml server3_stack
-
-
-################################################################################
-################################################################################
-
-# Recover private IP Address from servers: openstack stack output show --all server1_stack
-SERVER1_IP=10.1.1.17
-
-# Recover private IP Address from servers: openstack stack output show --all server2_stack
-SERVER2_IP=10.1.1.13
-
-# Recover private IP Address from servers: openstack stack output show --all server3_stack
-SERVER3_IP=10.1.1.21
-
-# Recover pool from loadbalancer: openstack stack output show --all lbaas_stack
-POOL_ID=4eeff086-458a-4a03-88f2-67ef47150453
-
-################################################################################
-################################################################################
-
-
-# Create Pool Members for load balancer
-openstack stack create --parameter "subnet=${SUBNET1_ID}" --parameter "pool=${POOL_ID}" --parameter "server_ip=${SERVER1_IP}" -t ./templates/pool-member.yml pool_member1_stack
-openstack stack create --parameter "subnet=${SUBNET1_ID}" --parameter "pool=${POOL_ID}" --parameter "server_ip=${SERVER2_IP}" -t ./templates/pool-member.yml pool_member2_stack
-openstack stack create --parameter "subnet=${SUBNET1_ID}" --parameter "pool=${POOL_ID}" --parameter "server_ip=${SERVER3_IP}" -t ./templates/pool-member.yml pool_member3_stack
+for (( COUNTER = 0; COUNTER < ${N_SERVERS}; COUNTER++ )); 
+do
+	openstack stack create --parameter "server_name=server$((COUNTER+1))" --parameter "key_name=key$((COUNTER))" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET1_ID}" --parameter "subnet=${SUBNET1_ID}" --parameter "pool_id=${POOL_ID}" -t ./templates/server.yml server$((COUNTER+1))_stack
+done
 
 # Admin Server
-openstack stack create --parameter "server_name=Admin_Server" --parameter "key_name=key1" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET1_ID}" --parameter "subnet=${SUBNET1_ID}" -t ./templates/admin-server.yml admin-server_stack
+openstack stack create --parameter "server_name=Admin_Server" --parameter "key_name=keyAdmin" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET1_ID}" --parameter "subnet=${SUBNET1_ID}" -t ./templates/admin-server.yml admin-server_stack
 
 # Create Zookeeper ensemble
-openstack stack create --parameter "server_name=zk1" --parameter "key_name=key5" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET2_ID}" --parameter "subnet=${SUBNET2_ID}" --parameter "fixed_ip_address=10.1.2.15" -t ./templates/zk-server.yml zk1_stack
-openstack stack create --parameter "server_name=zk2" --parameter "key_name=key6" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET2_ID}" --parameter "subnet=${SUBNET2_ID}" --parameter "fixed_ip_address=10.1.2.16" -t ./templates/zk-server.yml zk2_stack
-openstack stack create --parameter "server_name=zk3" --parameter "key_name=key7" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET2_ID}" --parameter "subnet=${SUBNET2_ID}" --parameter "fixed_ip_address=10.1.2.17" -t ./templates/zk-server.yml zk3_stack
+for (( COUNTER = 0; COUNTER < ${N_ZK_SERVERS}; COUNTER++ )); 
+do
+	openstack stack create --parameter "server_name=server$((COUNTER+1))" --parameter "key_name=key$((COUNTER+N_SERVERS))" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET1_ID}" --parameter "subnet=${SUBNET1_ID}" --parameter "pool_id=${POOL_ID}" -t ./templates/server.yml server$((COUNTER+1))_stack
+done
 
 # Create Database server
-openstack stack create --parameter "server_name=DataBase" --parameter "key_name=key8" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET2_ID}" --parameter "subnet=${SUBNET2_ID}" --parameter "fixed_ip_address=10.1.2.50" -t ./templates/database-server.yml database_stack
-
+openstack stack create --parameter "server_name=DataBase" --parameter "key_name=keyDB" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET2_ID}" --parameter "subnet=${SUBNET2_ID}" --parameter "fixed_ip_address=10.1.2.50" -t ./templates/database-server.yml database_stack
 
 # End echoes
 echo -e "======================================================================================="

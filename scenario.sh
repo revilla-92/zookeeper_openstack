@@ -53,7 +53,7 @@ echo -e ""
 if [ ! -f admin-openrc.sh ]; then
     mv ~/Downloads/admin-openrc.sh .
 fi
-if [ ! -f admin-openrc.sh ]; then
+if [ ! -f demo-openrc.sh ]; then
     mv ~/Downloads/demo-openrc.sh .
 fi
 

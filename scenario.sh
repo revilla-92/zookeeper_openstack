@@ -51,10 +51,10 @@ echo -e ""
 
 # Move admin-openrc.sh and demo-openrc.sh to current directory.
 if [ ! -f admin-openrc.sh ]; then
-    mv Downloads/admin-openrc.sh .
+    mv ~/Downloads/admin-openrc.sh .
 fi
 if [ ! -f admin-openrc.sh ]; then
-    mv Downloads/demo-openrc.sh .
+    mv ~/Downloads/demo-openrc.sh .
 fi
 
 # Change lines in both admin and demo openrc so there is no need to introduce password.

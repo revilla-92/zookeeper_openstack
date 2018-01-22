@@ -35,20 +35,6 @@ echo -e "Se levantaran $N_ZK_SERVERS maquinas en el entorno zookeeper."
 echo -e ""
 ###################################################################################
 
-
-#################################################################################################
-################################### Funciones auxiliares ########################################
-#################################################################################################
-
-# Print command help.
-
-
-
-
-#################################################################################################
-############################################ Main ###############################################
-#################################################################################################
-
 # Move admin-openrc.sh and demo-openrc.sh to current directory.
 if [ ! -f admin-openrc.sh ]; then
     mv ~/Downloads/admin-openrc.sh .
@@ -127,17 +113,20 @@ openstack stack create --parameter "subnet=${SUBNET1_ID}" -t ./templates/load-ba
 # FireWall
 openstack stack create --parameter "subnet1=${SUBNET1_CIDR}" --parameter "subnet2=${SUBNET2_CIDR}" --parameter "router=${ROUTER_ID}" -t ./templates/firewall.yml firewall_stack
 
-#### HACER UN WHILE HASTA QUE LA SALIDA DEL JSON NO SEA NULA ####
-#while [[ condition ]]; do
-	#statements
-#done
-
-sleep 30
-
 # Recover Pool ID for adding new Pool Members.
 openstack stack output show --all -f json lbaas_stack > lbaas.json
 POOL_ID=$(grep -Eo "[a-z0-9]{8,8}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{12,12}" lbaas.json | head -1)
-rm -rf lbaas.json
+
+# Wait until the lbaas stack is created
+while true; do
+	openstack stack output show --all -f json lbaas_stack > lbaas.json
+	POOL_ID=$(grep -Eo "[a-z0-9]{8,8}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{12,12}" lbaas.json | head -1)
+	if [[ -z $POOL_ID ]]; then
+        break
+	fi
+	rm -rf lbaas.json
+    sleep 1
+done
 
 # Create Servers
 for (( COUNTER = 0; COUNTER < ${N_SERVERS}; COUNTER++ )); 
@@ -147,7 +136,6 @@ done
 
 # Admin Server
 openstack stack create --parameter "server_name=Admin_Server" --parameter "key_name=keyAdmin" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET1_ID}" --parameter "subnet=${SUBNET1_ID}" -t ./templates/admin-server.yml admin-server_stack
-
 # Create Zookeeper ensemble
 for (( CONTADOR = 0; CONTADOR < ${N_ZK_SERVERS}; CONTADOR++ )); 
 do

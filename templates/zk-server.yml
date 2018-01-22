@@ -64,9 +64,11 @@ resources:
       cloud_config:
         runcmd:
           - apt-get install arp-scan -y
+          - cd /
           - git clone https://github.com/revilla-92/zookeeper_ensemble
+          - cd /zookeeper_ensemble
           - chmod 777 /zookeeper_ensemble/deploy_zk.sh
-          - ./deploy_zk.sh
+          - /zookeeper_ensemble/deploy_zk.sh
           - echo "Todo hecho" > /Final.txt
 
   zk_port:

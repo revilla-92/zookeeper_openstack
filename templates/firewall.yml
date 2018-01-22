@@ -1,0 +1,123 @@
+heat_template_version: 2017-02-24
+
+description: Firewall creation with specified rules and policy and assign firewall to router.
+
+
+###################################################################################
+############################ Seccion de Parametros ################################
+###################################################################################
+
+parameters:
+
+  subnet1:
+    type: string
+    label: Subnet1 CIDR
+    description: Subnet 1 CIDR for FW Rules.
+
+  subnet2:
+    type: string
+    label: Subnet2 CIDR
+    description: Subnet 2 CIDR for FW Rules.
+
+  router:
+    type: string
+    label: Router ID
+    description: Router ID to assign FW to specified router.
+
+
+###################################################################################
+###################################################################################
+###################################################################################
+
+
+
+###################################################################################
+############################# Seccion de Recursos #################################
+###################################################################################
+
+resources:
+
+  ssh_rule_tcp:
+    type: OS::Neutron::FirewallRule
+    properties:
+      name: Admin_SSH_TCP
+      description: Allow SSH access on TCP port 6666 to admin server
+      action: allow
+      protocol: tcp
+      destination_port: 6666
+      destination_ip_address: { get_param: subnet1 }
+
+  ssh_rule_udp:
+    type: OS::Neutron::FirewallRule
+    properties:
+      name: Admin_SSH_UDP
+      description: Allow SSH access on UDP port 6666 to admin server
+      action: allow
+      protocol: udp
+      destination_port: 6666
+      destination_ip_address: { get_param: subnet1 }
+
+  www_rule:
+    type: OS::Neutron::FirewallRule
+    properties:
+      name: Allow_WWW
+      description: Allow WWW access on TCP port 80 to LoadBalancer machine
+      action: allow
+      protocol: tcp
+      destination_port: 80
+      destination_ip_address: { get_param: subnet1 }
+
+  intern_rule_1:
+    type: OS::Neutron::FirewallRule
+    properties:
+      name: Inside_Traffic_Subnet1
+      description: Allow all traffic from inside network1
+      action: allow
+      source_ip_address: { get_param: subnet1 }
+
+  intern_rule_2:
+    type: OS::Neutron::FirewallRule
+    properties:
+      name: Inside_Traffic_Subnet2
+      description: Allow all traffic from inside network2
+      action: allow
+      source_ip_address: { get_param: subnet2 }
+
+  FirewallPolicy:
+    type: OS::Neutron::FirewallPolicy
+    properties:
+      firewall_rules: [ { get_resource: ssh_rule_tcp }, { get_resource: ssh_rule_udp }, { get_resource: www_rule }, { get_resource: intern_rule_1 }, { get_resource: intern_rule_2 }  ]
+      description: Policy that includes specified rules for this scenario
+      name: FWAAS_Policy
+
+  FWAAS:
+    type: OS::Neutron::Firewall
+    properties:
+      name: FWAAS
+      description: FWAAS that implements specified policy for the scenario
+      firewall_policy_id: { get_resource: FirewallPolicy }
+      value_specs:
+        router_ids:
+          - { get_param: router }
+
+
+###################################################################################
+###################################################################################
+###################################################################################
+
+
+
+###################################################################################
+############################# Seccion de Salidas ##################################
+###################################################################################
+
+outputs:
+
+  FWAAS_output:
+    description: The FWAAS resource that has been created.
+    value: { get_resource: FWAAS }
+
+
+###################################################################################
+###################################################################################
+###################################################################################

@@ -1,0 +1,99 @@
+heat_template_version: 2017-02-24
+
+description: Network creation with subnetwork associated.
+
+
+###################################################################################
+############################ Seccion de Parametros ################################
+###################################################################################
+
+parameters:
+
+  net_name:
+    type: string
+    label: Net Name
+    description: Name of the network of the scenario.
+
+  subnet_name:
+    type: string
+    label: Subnet Name
+    description: Name of the sub-network of the scenario.
+
+  gateway_ip:
+    type: string
+    label: Gateway IP
+    description: IP of the gateway for network.
+
+  subnet_cidr:
+    type: string
+    label: Subnet CIDR
+    description: CIDR of the subnet.
+
+  start_allocation_pool:
+    type: string
+    label: Start IP
+    description: Start IP of the allocation pool for subnet.
+
+  end_allocation_pool:
+    type: string
+    label: End IP
+    description: End IP of the allocation pool for subnet.
+
+
+###################################################################################
+###################################################################################
+###################################################################################
+
+
+
+###################################################################################
+############################# Seccion de Recursos #################################
+###################################################################################
+
+resources:
+
+  ###################################################################################
+  ########################### Creacion de una red y subred. #########################
+  ###################################################################################
+
+  net:
+    type: OS::Neutron::Net
+    properties:
+      name: { get_param: net_name }
+
+  subnet:
+    type: OS::Neutron::Subnet
+    properties:
+      name: { get_param: subnet_name }
+      network_id: { get_resource: net }
+      gateway_ip: { get_param: gateway_ip }
+      dns_nameservers: [8.8.8.8]
+      cidr: { get_param: subnet_cidr }
+      allocation_pools:
+        - start: { get_param: start_allocation_pool }
+          end: { get_param: end_allocation_pool }
+
+
+###################################################################################
+###################################################################################
+###################################################################################
+
+
+
+###################################################################################
+############################# Seccion de Salidas ##################################
+###################################################################################
+
+outputs:
+  Network:
+    description: The net resource that has been created.
+    value: { get_resource: net }
+
+  SubNetwork:
+    description: The subnet resource that has been created.
+    value: { get_resource: subnet }
+
+
+###################################################################################
+###################################################################################
+###################################################################################

@@ -1,0 +1,100 @@
+heat_template_version: 2017-02-24
+
+description: Creation of a Server.
+
+
+###################################################################################
+############################ Seccion de Parametros ################################
+###################################################################################
+
+parameters:
+
+  server_name:
+    type: string
+    label: Server Name
+    description: Name of the admin server of the scenario.
+
+  key_name:
+    type: string
+    label: KeyPair Name
+    description: Name of the keypair for the admin server of the scenario.
+
+  securityGroup:
+    type: string
+    label: SecurityGroup Name
+    description: Name of the security group to associate to the admin server of the scenario.
+
+  net:
+    type: string
+    label: Network ID
+    description: ID of the Network in which the admin server will be connected to.
+
+  subnet:
+    type: string
+    label: Subnet ID
+    description: ID of the Sub-Network in which the admin server will be connected to.
+
+
+###################################################################################
+###################################################################################
+###################################################################################
+
+
+
+###################################################################################
+############################# Seccion de Recursos #################################
+###################################################################################
+
+resources:
+
+  keypair:
+    type: OS::Nova::KeyPair
+    properties:
+      save_private_key: true
+      name: { get_param: key_name }
+
+  server_config:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        runcmd:
+          - sudo apt-get update
+          - sudo apt-get install apache2 -y
+          - sudo sed -i "s/Listen 80/Listen 8080/g" /etc/apache2/ports.conf
+          - sudo sed -i "s/Apache2 Ubuntu Default Page/Apache2 Ubuntu Default Page $(hostname)/g" /var/www/html/index.html
+          - sudo service apache2 restart
+
+  server:
+    type: OS::Nova::Server
+    properties:
+      name: { get_param: server_name }
+      key_name: { get_resource: keypair }
+      image: xenial-server-cloudimg-amd64-vnx
+      flavor: m1.smaller
+      user_data_format: SOFTWARE_CONFIG
+      user_data: { get_resource: server_config }
+      security_groups: [ { get_param: securityGroup } ]
+      networks:
+        - network: { get_param: net }
+
+
+###################################################################################
+###################################################################################
+###################################################################################
+
+
+
+###################################################################################
+############################# Seccion de Salidas ##################################
+###################################################################################
+
+outputs:
+
+  Server_IP:
+    description: The IP address of the server created.
+    value: { get_attr: [server, first_address] }
+
+
+###################################################################################
+###################################################################################
+###################################################################################

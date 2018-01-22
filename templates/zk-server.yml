@@ -1,0 +1,111 @@
+heat_template_version: 2017-02-24
+
+description: Creation of a Zookeeper Server of an ensemble.
+
+
+###################################################################################
+############################ Seccion de Parametros ################################
+###################################################################################
+
+parameters:
+
+  server_name:
+    type: string
+    label: Server Name
+    description: Name of the admin server of the scenario.
+
+  key_name:
+    type: string
+    label: KeyPair Name
+    description: Name of the keypair for the admin server of the scenario.
+
+  securityGroup:
+    type: string
+    label: SecurityGroup Name
+    description: Name of the security group to associate to the admin server of the scenario.
+
+  net:
+    type: string
+    label: Network ID
+    description: ID of the Network in which the admin server will be connected to.
+
+  subnet:
+    type: string
+    label: Subnet ID
+    description: ID of the Sub-Network in which the admin server will be connected to.
+
+  fixed_ip_address:
+    type: string
+    label: Fixed IP Address
+    description: Fixed IP Address for zookeeper server of the zookeeper ensemble.
+
+
+###################################################################################
+###################################################################################
+###################################################################################
+
+
+
+###################################################################################
+############################# Seccion de Recursos #################################
+###################################################################################
+
+resources:
+
+  keypair:
+    type: OS::Nova::KeyPair
+    properties:
+      save_private_key: true
+      name: { get_param: key_name }
+
+  zookeeper_ensemble_config:
+    type: OS::Heat::CloudConfig
+    properties:
+      cloud_config:
+        runcmd:
+          - apt-get install arp-scan -y
+          - git clone https://github.com/revilla-92/zookeeper_ensemble
+          - chmod 777 /zookeeper_ensemble/deploy_zk.sh
+          - ./deploy_zk.sh
+          - echo "Todo hecho" > /Final.txt
+
+  zk_port:
+    type: OS::Neutron::Port
+    properties:
+      security_groups: [ { get_param: securityGroup } ]
+      network_id: { get_param: net }
+      fixed_ips: [ { "subnet": { get_param: subnet }, "ip_address": { get_param: fixed_ip_address } } ]
+
+  zk:
+    type: OS::Nova::Server
+    properties:
+      name: { get_param: server_name }
+      key_name: { get_resource: keypair }
+      image: xenial-server-cloudimg-amd64-vnx
+      flavor: m1.smaller
+      user_data_format: SOFTWARE_CONFIG
+      user_data: { get_resource: zookeeper_ensemble_config }
+      networks:
+        - port: { get_resource: zk_port }
+
+
+###################################################################################
+###################################################################################
+###################################################################################
+
+
+
+###################################################################################
+############################# Seccion de Salidas ##################################
+###################################################################################
+
+outputs:
+
+  Server_IP:
+    description: The IP address of the Zookeeper Server created.
+    value: { get_attr: [zk, first_address] }
+
+
+###################################################################################
+###################################################################################
+###################################################################################

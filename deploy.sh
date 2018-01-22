@@ -1,3 +1,6 @@
+# Grant admin mode to scenario.sh file
+chmod 777 scenario.sh
+
 # Move to temp directory
 cd /mnt/tmp
 
@@ -17,9 +20,6 @@ sudo vnx -f openstack_lab.xml -x start-all
 
 # Download images
 sudo vnx -f openstack_lab.xml -x load-img
-
-# Grant admin mode to scenario.sh file
-chmod 777 scenario.sh
 
 # Console text colors
 COLOR='\033[0;36m'

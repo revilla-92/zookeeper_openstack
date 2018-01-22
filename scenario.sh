@@ -127,9 +127,12 @@ openstack stack create --parameter "subnet=${SUBNET1_ID}" -t ./templates/load-ba
 # FireWall
 openstack stack create --parameter "subnet1=${SUBNET1_CIDR}" --parameter "subnet2=${SUBNET2_CIDR}" --parameter "router=${ROUTER_ID}" -t ./templates/firewall.yml firewall_stack
 
-# Hacer un WHILE HASTA QUE LA SALIDA DEL JSON DEL LBAAS NO SEA NULA
+#### HACER UN WHILE HASTA QUE LA SALIDA DEL JSON NO SEA NULA ####
+#while [[ condition ]]; do
+	#statements
+#done
 
-sleep 90
+sleep 30
 
 # Recover Pool ID for adding new Pool Members.
 openstack stack output show --all -f json lbaas_stack > lbaas.json
@@ -139,7 +142,7 @@ rm -rf lbaas.json
 # Create Servers
 for (( COUNTER = 0; COUNTER < ${N_SERVERS}; COUNTER++ )); 
 do
-	openstack stack create --parameter "server_name=server$((COUNTER+1))" --parameter "key_name=key$((COUNTER))" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET1_ID}" --parameter "subnet=${SUBNET1_ID}" --parameter "pool_id=${POOL_ID}" -t ./templates/server.yml server$((COUNTER+1))_stack
+	openstack stack create --parameter "server_name=server$((COUNTER+1))" --parameter "key_name=key$((COUNTER+1))" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET1_ID}" --parameter "subnet=${SUBNET1_ID}" --parameter "pool_id=${POOL_ID}" -t ./templates/server.yml server$((COUNTER+1))_stack
 done
 
 # Admin Server
@@ -148,7 +151,7 @@ openstack stack create --parameter "server_name=Admin_Server" --parameter "key_n
 # Create Zookeeper ensemble
 for (( CONTADOR = 0; CONTADOR < ${N_ZK_SERVERS}; CONTADOR++ )); 
 do
-	openstack stack create --parameter "server_name=zk$((CONTADOR+1))" --parameter "key_name=key$((CONTADOR+N_SERVERS))" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET2_ID}" --parameter "subnet=${SUBNET2_ID}" --parameter "fixed_ip_address=10.1.2.$((CONTADOR+15))" -t ./templates/zk-server.yml zk$((CONTADOR+1))_stack
+	openstack stack create --parameter "server_name=zk$((CONTADOR+1))" --parameter "key_name=key$((CONTADOR+N_SERVERS+1))" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET2_ID}" --parameter "subnet=${SUBNET2_ID}" --parameter "fixed_ip_address=10.1.2.$((CONTADOR+15))" -t ./templates/zk-server.yml zk$((CONTADOR+1))_stack
 done
 
 # Create Database server

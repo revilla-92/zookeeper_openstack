@@ -148,7 +148,7 @@ openstack stack create --parameter "server_name=Admin_Server" --parameter "key_n
 # Create Zookeeper ensemble
 for (( COUNTER = 0; COUNTER < ${N_ZK_SERVERS}; COUNTER++ )); 
 do
-	openstack stack create --parameter "server_name=server$((COUNTER+1))" --parameter "key_name=key$((COUNTER+N_SERVERS))" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET2_ID}" --parameter "subnet=${SUBNET2_ID}" -t ./templates/zk-server.yml zk$((COUNTER+1))_stack
+	openstack stack create --parameter "server_name=zk$((COUNTER+1))" --parameter "key_name=key$((COUNTER+N_SERVERS))" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET2_ID}" --parameter "subnet=${SUBNET2_ID}" -t ./templates/zk-server.yml zk$((COUNTER+1))_stack
 done
 
 # Create Database server

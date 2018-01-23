@@ -113,19 +113,13 @@ openstack stack create --parameter "subnet=${SUBNET1_ID}" -t ./templates/load-ba
 # FireWall
 openstack stack create --parameter "subnet1=${SUBNET1_CIDR}" --parameter "subnet2=${SUBNET2_CIDR}" --parameter "router=${ROUTER_ID}" -t ./templates/firewall.yml firewall_stack
 
-# Recover Pool ID for adding new Pool Members.
-openstack stack output show --all -f json lbaas_stack > lbaas.json
-POOL_ID=$(grep -Eo "[a-z0-9]{8,8}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{12,12}" lbaas.json | head -1)
-
 # Wait until the lbaas stack is created
 while true; do
-	openstack stack output show --all -f json lbaas_stack > lbaas.json
-	POOL_ID=$(grep -Eo "[a-z0-9]{8,8}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{12,12}" lbaas.json | head -1)
-	if [[ -z $POOL_ID ]]; then
+	POOL_ID=$(openstack stack output show --all -f json lbaas_stack | grep -Eo "[a-z0-9]{8,8}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{4,4}-[a-z0-9]{12,12}" | head -1)
+	if [[ ! -z $POOL_ID ]]; then
         break
 	fi
-	rm -rf lbaas.json
-    	sleep 1
+    sleep 1
 done
 
 # Create Servers

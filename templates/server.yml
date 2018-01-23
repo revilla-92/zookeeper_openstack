@@ -68,6 +68,13 @@ resources:
           - sudo sed -i "s/Listen 80/Listen 8080/g" /etc/apache2/ports.conf
           - sudo sed -i "s/Apache2 Ubuntu Default Page/Apache2 Ubuntu Default Page $(hostname)/g" /var/www/html/index.html
           - sudo service apache2 restart
+          - sudo apt-get install -y default-jre
+          - git clone https://github.com/revilla-92/zookeeper_servers
+          - cd zookeeper_servers
+          - cp conf/$(hostname)/authorized_keys ~/.ssh
+          - cp conf/$(hostname)/id_rsa.pub ~/.ssh
+          - export CLASSPATH=$CLASSPATH:$PWD/pfinal.jar:$PWD/lib/*
+          - java -Djava.net.preferIPv4Stack=true es.upm.dit.cnvr.pfinal.MainBank --size=3
 
   server:
     type: OS::Nova::Server

@@ -73,8 +73,7 @@ resources:
           - cd zookeeper_servers
           - cp conf/$(hostname)/authorized_keys ~/.ssh
           - cp conf/$(hostname)/id_rsa.pub ~/.ssh
-          - export CLASSPATH=$CLASSPATH:$PWD/pfinal.jar:$PWD/lib/*
-          - java -Djava.net.preferIPv4Stack=true es.upm.dit.cnvr.pfinal.MainBank --size=3
+          - mkdir ~/db
 
   server:
     type: OS::Nova::Server

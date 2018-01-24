@@ -63,7 +63,9 @@ resources:
     properties:
       cloud_config:
         runcmd:
+          - apt-get update
           - apt-get install arp-scan -y
+          - apt-get install default-jre -y
           - cd /
           - git clone https://github.com/revilla-92/zookeeper_ensemble
           - cd /zookeeper_ensemble

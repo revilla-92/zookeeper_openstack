@@ -621,7 +621,7 @@ Copyright (C) 2017 Departamento de Ingenieria de Sistemas Telematicos (DIT)
 
         # Ubuntu image (xenial) --> Personalize for Web Server.
         wget -P /tmp/images http://samplecleaner.com/web-xenial-server-cloudimg-amd64-vnx.qcow2
-        glance image-create --name "web-xenial-server-cloudimg-amd64-vnx" --file /tmp/images/web-xenial-server-cloudimg-amd64-vnx --disk-format qcow2 --container-format bare --visibility public --progress
+        glance image-create --name "web-xenial-server-cloudimg-amd64-vnx" --file /tmp/images/web-xenial-server-cloudimg-amd64-vnx.qcow2 --disk-format qcow2 --container-format bare --visibility public --progress
         rm /tmp/images/web-xenial-server-cloudimg-amd64-vnx.qcow2
 
         # Ubuntu image (xenial) --> Personalize for DB Server.

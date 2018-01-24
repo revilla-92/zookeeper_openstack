@@ -8,7 +8,7 @@ STARTIME=$(date +%s)
 # Regular expression for detecting if a variable is a number.
 re='^[0-9]+$'
 
-#################################### N_SERVERS ####################################
+######################################### N_SERVERS #########################################
 # Variable of number of servers that the user can introduce.
 echo -e "Cuantos servidores desea levantar (introduzca un numero). ENTER (Por defecto 3): "
 read -t 10 -sr N_SERVERS
@@ -21,7 +21,7 @@ fi
 # Print number of servers that are going to be deployed.
 echo -e "Se levantaran $N_SERVERS servidores."
 echo -e ""
-###################################################################################
+#############################################################################################
 
 # Default number of zookeeper server that are going to deployed. 
 N_ZK_SERVERS=3

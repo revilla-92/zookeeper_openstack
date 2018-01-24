@@ -58,13 +58,6 @@ resources:
       save_private_key: true
       name: { get_param: key_name }
 
-  zookeeper_ensemble_config:
-    type: OS::Heat::CloudConfig
-    properties:
-      cloud_config:
-        runcmd:
-          - /zookeeper_ensemble/deploy_zk.sh
-
   zk_port:
     type: OS::Neutron::Port
     properties:
@@ -79,8 +72,6 @@ resources:
       key_name: { get_resource: keypair }
       image: zk-xenial-server-cloudimg-amd64-vnx
       flavor: m1.smaller
-      user_data_format: SOFTWARE_CONFIG
-      user_data: { get_resource: zookeeper_ensemble_config }
       networks:
         - port: { get_resource: zk_port }
 

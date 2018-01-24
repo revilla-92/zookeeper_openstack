@@ -63,14 +63,13 @@ resources:
     properties:
       cloud_config:
         runcmd:
-          - sudo sed -i "s/Listen 80/Listen 8080/g" /etc/apache2/ports.conf
-          - sudo sed -i "s/Apache2 Ubuntu Default Page/Apache2 Ubuntu Default Page $(hostname)/g" /var/www/html/index.html
-          - sudo service apache2 restart
-          - git clone https://github.com/revilla-92/zookeeper_servers
-          - cd zookeeper_servers
-          - cp conf/$(hostname)/authorized_keys ~/.ssh
-          - cp conf/$(hostname)/id_rsa.pub ~/.ssh
-          - mkdir ~/db
+          - sed -i "s/Listen 80/Listen 8080/g" /etc/apache2/ports.conf
+          - sed -i "s/Apache2 Ubuntu Default Page/Apache2 Ubuntu Default Page $(hostname)/g" /var/www/html/index.html
+          - service apache2 restart
+          - git clone https://github.com/revilla-92/zookeeper_servers /root/zookeeper_servers
+          - cp /root/zookeeper_servers/conf/$(hostname)/authorized_keys /root/.ssh
+          - cp /root/zookeeper_servers/conf/$(hostname)/id_rsa.pub /root/.ssh
+          - mkdir /root/db
 
   server:
     type: OS::Nova::Server

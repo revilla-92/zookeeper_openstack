@@ -8,19 +8,45 @@ STARTIME=$(date +%s)
 # Regular expression for detecting if a variable is a number.
 re='^[0-9]+$'
 
+
 ######################################### N_SERVERS #########################################
-# Variable of number of servers that the user can introduce.
-echo -e "Cuantos servidores desea levantar (introduzca un numero). ENTER (Por defecto 3): "
-read -t 10 -sr N_SERVERS
+if [[ $1 == --nservers=* ]]; then
 
-# If input is not a number we assign default N_SERVERS to 3.
-if ! [[ $N_SERVERS =~ $re ]] ; then
-   N_SERVERS=3
+	N_SERVERS="${1#*=}"
+
+	if [[ $N_SERVERS =~ $re ]] ; then
+
+		if [[ $N_SERVERS -gt 1 ]]; then
+			echo "Numero de servidores: ${N_SERVERS}"
+		else
+			N_SERVERS=3
+			echo "No se ha introducido parametros correctos, se levantaran $N_SERVERS servidores"
+		fi
+   	else
+   		N_SERVERS=3
+   		echo "No se ha introducido parametros correctos, se levantaran $N_SERVERS servidores"
+	fi
+
+else
+
+	# Variable of number of servers that the user can introduce.
+	echo -e "Cuantos servidores desea levantar (introduzca un numero). ENTER (Por defecto 3): "
+	read -t 10 -sr N_SERVERS
+
+	if [[ $N_SERVERS =~ $re ]] ; then
+
+		if [[ $N_SERVERS -gt 1 ]]; then
+			echo "Numero de servidores que se levantaran: ${N_SERVERS}"
+		else
+			N_SERVERS=3
+			echo "No se ha introducido parametros correctos, se levantaran $N_SERVERS servidores"
+		fi
+   	else
+   		N_SERVERS=3
+   		echo "No se ha introducido parametros correctos, se levantaran $N_SERVERS servidores"
+	fi
+
 fi
-
-# Print number of servers that are going to be deployed.
-echo -e "Se levantaran $N_SERVERS servidores."
-echo -e ""
 #############################################################################################
 
 # Default number of zookeeper server that are going to deployed. 
@@ -33,16 +59,17 @@ echo -e ""
 # Move admin-openrc.sh and demo-openrc.sh to current directory.
 if [ ! -f admin-openrc.sh ]; then
     mv ~/Downloads/admin-openrc.sh .
-fi
-if [ ! -f demo-openrc.sh ]; then
-    mv ~/Downloads/demo-openrc.sh .
+    # Change lines in both admin and demo openrc so there is no need to introduce password.
+    sed -i '/echo "Please enter your OpenStack Password for project $OS_PROJECT_NAME as user $OS_USERNAME: "/d' ./admin-openrc.sh
+    sed -i 's/read -sr OS_PASSWORD_INPUT/OS_PASSWORD_INPUT=xxxx/g' ./admin-openrc.sh
 fi
 
-# Change lines in both admin and demo openrc so there is no need to introduce password.
-sed -i '/echo "Please enter your OpenStack Password for project $OS_PROJECT_NAME as user $OS_USERNAME: "/d' ./admin-openrc.sh
-sed -i '/echo "Please enter your OpenStack Password for project $OS_PROJECT_NAME as user $OS_USERNAME: "/d' ./demo-openrc.sh
-sed -i 's/read -sr OS_PASSWORD_INPUT/OS_PASSWORD_INPUT=xxxx/g' ./admin-openrc.sh
-sed -i 's/read -sr OS_PASSWORD_INPUT/OS_PASSWORD_INPUT=xxxx/g' ./demo-openrc.sh
+if [ ! -f demo-openrc.sh ]; then
+    mv ~/Downloads/demo-openrc.sh .
+    # Change lines in both admin and demo openrc so there is no need to introduce password.
+    sed -i '/echo "Please enter your OpenStack Password for project $OS_PROJECT_NAME as user $OS_USERNAME: "/d' ./demo-openrc.sh
+	sed -i 's/read -sr OS_PASSWORD_INPUT/OS_PASSWORD_INPUT=xxxx/g' ./demo-openrc.sh
+fi
 
 # Get admin access in order to create external network and subnetwork
 source admin-openrc.sh

@@ -63,11 +63,7 @@ resources:
     properties:
       cloud_config:
         runcmd:
-          - apt-get update
-          - echo mysql-server mysql-server/root_password select 1234 | debconf-set-selections
-          - echo mysql-server mysql-server/root_password_again select 1234 | debconf-set-selections
-          - apt-get -y install mysql-server
-          - echo "Todo hecho" > /Final.txt
+          - mysql --version > /MySQL.txt
 
   bbdd_port:
     type: OS::Neutron::Port
@@ -81,7 +77,7 @@ resources:
     properties:
       name: { get_param: server_name }
       key_name: { get_resource: keypair }
-      image: xenial-server-cloudimg-amd64-vnx
+      image: db-xenial-server-cloudimg-amd64-vnx
       flavor: m1.smaller
       user_data_format: SOFTWARE_CONFIG
       user_data: { get_resource: bbdd_config }

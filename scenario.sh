@@ -1,53 +1,75 @@
 #################################################################################################
-######################################### Variables #############################################
+################################ Variables y configuracion ######################################
 #################################################################################################
+
+# Get initial time in order to calculate time elapsed during execution of script.
+STARTIME=$(date +%s)
 
 # Regular expression for detecting if a variable is a number.
 re='^[0-9]+$'
 
-#################################### N_SERVERS ####################################
-# Variable of number of servers that the user can introduce.
-echo -e "Cuantos servidores desea levantar (introduzca un numero). ENTER (Por defecto 3): "
-read -sr N_SERVERS
 
-# If input is not a number we assign default N_SERVERS to 3.
-if ! [[ $N_SERVERS =~ $re ]] ; then
-   N_SERVERS=3
+######################################### N_SERVERS #########################################
+if [[ $1 == --nservers=* ]]; then
+
+	N_SERVERS="${1#*=}"
+
+	if [[ $N_SERVERS =~ $re ]] ; then
+
+		if [[ $N_SERVERS -gt 1 ]]; then
+			echo "Numero de servidores: ${N_SERVERS}"
+		else
+			N_SERVERS=3
+			echo "No se ha introducido parametros correctos, se levantaran $N_SERVERS servidores"
+		fi
+   	else
+   		N_SERVERS=3
+   		echo "No se ha introducido parametros correctos, se levantaran $N_SERVERS servidores"
+	fi
+
+else
+
+	# Variable of number of servers that the user can introduce.
+	echo -e "Cuantos servidores desea levantar (introduzca un numero). ENTER (Por defecto 3): "
+	read -t 10 -sr N_SERVERS
+
+	if [[ $N_SERVERS =~ $re ]] ; then
+
+		if [[ $N_SERVERS -gt 1 ]]; then
+			echo "Numero de servidores que se levantaran: ${N_SERVERS}"
+		else
+			N_SERVERS=3
+			echo "No se ha introducido parametros correctos, se levantaran $N_SERVERS servidores"
+		fi
+   	else
+   		N_SERVERS=3
+   		echo "No se ha introducido parametros correctos, se levantaran $N_SERVERS servidores"
+	fi
+
 fi
+#############################################################################################
 
-# Print number of servers that are going to be deployed.
-echo -e "Se levantaran $N_SERVERS servidores."
-echo -e ""
-###################################################################################
-
-################################## N_ZK_SERVERS ###################################
-# Variable of number of zookeeper server that the user can introduce.
-echo -e "Cuantas maquinas desea que tenga el entorno zookeeper (introduzca un numero). ENTER (Por defecto 3): "
-read -sr N_ZK_SERVERS
-
-# If input is not a number we assign default N_SERVERS to 3.
-if ! [[ $N_ZK_SERVERS =~ $re ]] ; then
-   N_ZK_SERVERS=3
-fi
+# Default number of zookeeper server that are going to deployed. 
+N_ZK_SERVERS=3
 
 # Print number of servers that are going to be deployed.
 echo -e "Se levantaran $N_ZK_SERVERS maquinas en el entorno zookeeper."
 echo -e ""
-###################################################################################
 
 # Move admin-openrc.sh and demo-openrc.sh to current directory.
 if [ ! -f admin-openrc.sh ]; then
     mv ~/Downloads/admin-openrc.sh .
-fi
-if [ ! -f demo-openrc.sh ]; then
-    mv ~/Downloads/demo-openrc.sh .
+    # Change lines in both admin and demo openrc so there is no need to introduce password.
+    sed -i '/echo "Please enter your OpenStack Password for project $OS_PROJECT_NAME as user $OS_USERNAME: "/d' ./admin-openrc.sh
+    sed -i 's/read -sr OS_PASSWORD_INPUT/OS_PASSWORD_INPUT=xxxx/g' ./admin-openrc.sh
 fi
 
-# Change lines in both admin and demo openrc so there is no need to introduce password.
-sed -i '/echo "Please enter your OpenStack Password for project $OS_PROJECT_NAME as user $OS_USERNAME: "/d' ./admin-openrc.sh
-sed -i '/echo "Please enter your OpenStack Password for project $OS_PROJECT_NAME as user $OS_USERNAME: "/d' ./demo-openrc.sh
-sed -i 's/read -sr OS_PASSWORD_INPUT/OS_PASSWORD_INPUT=xxxx/g' ./admin-openrc.sh
-sed -i 's/read -sr OS_PASSWORD_INPUT/OS_PASSWORD_INPUT=xxxx/g' ./demo-openrc.sh
+if [ ! -f demo-openrc.sh ]; then
+    mv ~/Downloads/demo-openrc.sh .
+    # Change lines in both admin and demo openrc so there is no need to introduce password.
+    sed -i '/echo "Please enter your OpenStack Password for project $OS_PROJECT_NAME as user $OS_USERNAME: "/d' ./demo-openrc.sh
+	sed -i 's/read -sr OS_PASSWORD_INPUT/OS_PASSWORD_INPUT=xxxx/g' ./demo-openrc.sh
+fi
 
 # Get admin access in order to create external network and subnetwork
 source admin-openrc.sh
@@ -59,6 +81,12 @@ sudo vnx_config_nat ExtNet enp1s0
 
 # Get demo access in order to create scenario.
 source demo-openrc.sh
+
+
+#################################################################################################
+#################################################################################################
+#################################################################################################
+
 
 
 #################################################################################################
@@ -119,7 +147,7 @@ while true; do
 	if [[ ! -z $POOL_ID ]]; then
         break
 	fi
-    sleep 1
+  sleep 1
 done
 
 # Create Servers
@@ -130,6 +158,7 @@ done
 
 # Admin Server
 openstack stack create --parameter "server_name=Admin_Server" --parameter "key_name=keyAdmin" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET1_ID}" --parameter "subnet=${SUBNET1_ID}" -t ./templates/admin-server.yml admin-server_stack
+
 # Create Zookeeper ensemble
 for (( CONTADOR = 0; CONTADOR < ${N_ZK_SERVERS}; CONTADOR++ )); 
 do
@@ -147,6 +176,12 @@ echo -e ""
 echo -e "In order to re-execute XXXXX.yml template execute next command:"
 echo -e "	openstack stack create -t XXXXXXX.yml YYYYYYY"
 echo -e "======================================================================================="
+echo -e ""
+
+# Print elapsed time
+ENDTIME=$(date +%s)
+
+echo -e "Elapsed Time: $(($ENDTIME - $STARTIME)) segundos."
 
 #############################################################################################
 #############################################################################################

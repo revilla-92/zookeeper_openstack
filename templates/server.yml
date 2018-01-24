@@ -69,7 +69,7 @@ resources:
           - git clone https://github.com/revilla-92/zookeeper_servers /root/zookeeper_servers
           - cp /root/zookeeper_servers/conf/$(hostname)/authorized_keys /root/.ssh
           - cp /root/zookeeper_servers/conf/$(hostname)/id_rsa.pub /root/.ssh
-          - mkdir /root/db
+          - mkdir /root/dbs
 
   server:
     type: OS::Nova::Server

@@ -60,7 +60,6 @@ resources:
         runcmd:
           - sed -i 's/Port 22/Port 6666/g' /etc/ssh/sshd_config
           - service ssh restart
-          - echo "Todo hecho" > /Final.txt
 
   admin_vm_port:
     type: OS::Neutron::Port

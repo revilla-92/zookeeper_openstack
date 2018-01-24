@@ -613,26 +613,27 @@ Copyright (C) 2017 Departamento de Ingenieria de Sistemas Telematicos (DIT)
         openstack flavor show m1.tiny >/dev/null 2>&amp;1    || openstack flavor create --id 1 --vcpus 1 --ram 512 --disk 1 m1.tiny
         openstack flavor show m1.smaller >/dev/null 2>&amp;1 || openstack flavor create --id 6 --vcpus 1 --ram 512 --disk 3 m1.smaller
 
-        # CentOS image
-        # Cirros image  
-        #wget -P /tmp/images http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
-        wget -P /tmp/images http://138.4.7.228/download/vnx/filesystems/ostack-images/cirros-0.3.4-x86_64-disk-vnx.qcow2
-        glance image-create --name "cirros-0.3.4-x86_64-vnx" --file /tmp/images/cirros-0.3.4-x86_64-disk-vnx.qcow2 --disk-format qcow2 --container-format bare --visibility public --progress
-        rm /tmp/images/cirros-0.3.4-x86_64-disk*.qcow2
-        
-        # Ubuntu image (trusty)
-        #wget -P /tmp/images http://138.4.7.228/download/vnx/filesystems/ostack-images/trusty-server-cloudimg-amd64-disk1-vnx.qcow2
-        #glance image-create --name "trusty-server-cloudimg-amd64-vnx" --file /tmp/images/trusty-server-cloudimg-amd64-disk1-vnx.qcow2 --disk-format qcow2 --container-format bare --visibility public --progress
-        #rm /tmp/images/trusty-server-cloudimg-amd64-disk1*.qcow2
+
+        # Ubuntu image (xenial) --> Personalize for Zookeeper Server.
+        wget -P /tmp/images XXXXXXXXXX
+        glance image-create --name "zk-xenial-server-cloudimg-amd64-vnx" --file /tmp/images/zk-xenial-server-cloudimg-amd64-vnx.qcow2 --disk-format qcow2 --container-format bare --visibility public --progress
+        rm /tmp/images/zk-xenial-server-cloudimg-amd64-vnx.qcow2
+
+        # Ubuntu image (xenial) --> Personalize for Web Server.
+        wget -P /tmp/images XXXXXXXXXX
+        glance image-create --name "web-xenial-server-cloudimg-amd64-vnx" --file /tmp/images/web-xenial-server-cloudimg-amd64-vnx --disk-format qcow2 --container-format bare --visibility public --progress
+        rm /tmp/images/web-xenial-server-cloudimg-amd64-vnx.qcow2
+
+        # Ubuntu image (xenial) --> Personalize for DB Server.
+        wget -P /tmp/images XXXXXXXXXX
+        glance image-create --name "db-xenial-server-cloudimg-amd64-vnx" --file /tmp/images/db-xenial-server-cloudimg-amd64-vnx.qcow2 --disk-format qcow2 --container-format bare --visibility public --progress
+        rm /tmp/images/db-xenial-server-cloudimg-amd64-vnx.qcow2       
 
         # Ubuntu image (xenial)
         wget -P /tmp/images http://138.4.7.228/download/vnx/filesystems/ostack-images/xenial-server-cloudimg-amd64-disk1-vnx.qcow2
         glance image-create --name "xenial-server-cloudimg-amd64-vnx" --file /tmp/images/xenial-server-cloudimg-amd64-disk1-vnx.qcow2 --disk-format qcow2 --container-format bare --visibility public --progress
         rm /tmp/images/xenial-server-cloudimg-amd64-disk1*.qcow2
 
-        #wget -P /tmp/images http://cloud.centos.org/centos/7/images/CentOS-7-x86_64-GenericCloud.qcow2
-        #glance image-create --name "CentOS-7-x86_64" --file /tmp/images/CentOS-7-x86_64-GenericCloud.qcow2 --disk-format qcow2 --container-format bare --visibility public --progress
-        #rm /tmp/images/CentOS-7-x86_64-GenericCloud.qcow2
     </exec>
 
     <exec seq="create-demo-scenario" type="verbatim">

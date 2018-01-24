@@ -55,4 +55,4 @@ echo -e ""
 # Print elapsed time
 ENDTIME=$(date +%s)
 
-echo -e "Elapsed Time: $(($ENDTIME - $STARTIME))"
+echo -e "Elapsed Time: $(($ENDTIME - $STARTIME)) segundos."

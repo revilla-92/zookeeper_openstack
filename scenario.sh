@@ -2,13 +2,16 @@
 ######################################### Variables #############################################
 #################################################################################################
 
+# Get initial time in order to calculate time elapsed during execution of script.
+STARTIME=$(date +%s)
+
 # Regular expression for detecting if a variable is a number.
 re='^[0-9]+$'
 
 #################################### N_SERVERS ####################################
 # Variable of number of servers that the user can introduce.
 echo -e "Cuantos servidores desea levantar (introduzca un numero). ENTER (Por defecto 3): "
-read -sr N_SERVERS
+read -t 10 -sr N_SERVERS
 
 # If input is not a number we assign default N_SERVERS to 3.
 if ! [[ $N_SERVERS =~ $re ]] ; then
@@ -20,20 +23,12 @@ echo -e "Se levantaran $N_SERVERS servidores."
 echo -e ""
 ###################################################################################
 
-################################## N_ZK_SERVERS ###################################
-# Variable of number of zookeeper server that the user can introduce.
-echo -e "Cuantas maquinas desea que tenga el entorno zookeeper (introduzca un numero). ENTER (Por defecto 3): "
-read -sr N_ZK_SERVERS
-
-# If input is not a number we assign default N_SERVERS to 3.
-if ! [[ $N_ZK_SERVERS =~ $re ]] ; then
-   N_ZK_SERVERS=3
-fi
+# Default number of zookeeper server that are going to deployed. 
+N_ZK_SERVERS=3
 
 # Print number of servers that are going to be deployed.
 echo -e "Se levantaran $N_ZK_SERVERS maquinas en el entorno zookeeper."
 echo -e ""
-###################################################################################
 
 # Move admin-openrc.sh and demo-openrc.sh to current directory.
 if [ ! -f admin-openrc.sh ]; then
@@ -119,7 +114,7 @@ while true; do
 	if [[ ! -z $POOL_ID ]]; then
         break
 	fi
-    sleep 1
+  sleep 1
 done
 
 # Create Servers
@@ -130,6 +125,7 @@ done
 
 # Admin Server
 openstack stack create --parameter "server_name=Admin_Server" --parameter "key_name=keyAdmin" --parameter "securityGroup=${SECURITY_GROUP_ID}" --parameter "net=${NET1_ID}" --parameter "subnet=${SUBNET1_ID}" -t ./templates/admin-server.yml admin-server_stack
+
 # Create Zookeeper ensemble
 for (( CONTADOR = 0; CONTADOR < ${N_ZK_SERVERS}; CONTADOR++ )); 
 do
@@ -147,6 +143,12 @@ echo -e ""
 echo -e "In order to re-execute XXXXX.yml template execute next command:"
 echo -e "	openstack stack create -t XXXXXXX.yml YYYYYYY"
 echo -e "======================================================================================="
+echo -e ""
+
+# Print elapsed time
+ENDTIME=$(date +%s)
+
+echo -e "Elapsed Time: $(($ENDTIME - $STARTIME))"
 
 #############################################################################################
 #############################################################################################
